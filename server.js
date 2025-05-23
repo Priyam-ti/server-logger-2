@@ -22,11 +22,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({ status: 'Server is running' });
-});
-
 // Middleware to log all requests
 app.use((req, res, next) => {
   const requestLog = {
@@ -42,9 +37,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// Sample endpoint to test logging
-app.get('/test', (req, res) => {
-  res.json({ message: 'Test endpoint hit!' });
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'Request received at root endpoint!' });
+});
+
+// Webhook endpoint
+app.post('/webhook', (req, res) => {
+  const webhookData = req.body;
+  console.log('Received webhook data:', webhookData);
+  
+  // Emit the webhook data to all connected clients
+  io.emit('requestLog', {
+    method: 'WEBHOOK',
+    url: '/webhook',
+    headers: req.headers,
+    body: webhookData,
+    timestamp: new Date().toISOString()
+  });
+  
+  res.status(200).json({ message: 'Webhook received successfully!' });
 });
 
 app.post('/api/data', (req, res) => {
